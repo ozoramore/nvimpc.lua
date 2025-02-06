@@ -1,4 +1,4 @@
-local mpd = require('mpd')
+local mpd = require('nvimpc/lua-mpd/mpd')
 local M = {}
 
 function M.setup(opts)
