@@ -1,6 +1,0 @@
-[submodule "lua/nvmpc/luasocket"]
-	path = lua/nvimpc/luasocket
-	url = https://github.com/lunarmodules/luasocket.git
-[submodule "lua/nvimpc/lua-mpd"]
-	path = lua/nvimpc/lua-mpd
-	url = https://github.com/kaworu/lua-mpd.git
