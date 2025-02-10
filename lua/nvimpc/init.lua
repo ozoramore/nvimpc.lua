@@ -33,7 +33,7 @@ end
 M.result = {}
 
 M.command = function(data)
-	local is_connect = false
+	local is_connect = true
 	local writebuf = data .. "\nclose\n"
 	local resultbuf = ""
 	local client = uv.new_tcp()
@@ -65,7 +65,6 @@ M.command = function(data)
 
 	local on_connect = function(status)
 		assert(not status, status)
-		is_connect = true
 		client:write(writebuf, on_write)
 	end
 
