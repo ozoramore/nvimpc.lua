@@ -2,7 +2,8 @@ local M = {}
 
 M.split = function(str, ts)
 	local t, i = {}, 1
-	for s in string.gmatch(str, "([^" .. ts or "\n" .. "]+)") do
+	ts = ts or "\n"
+	for s in string.gmatch(str, "([^" .. ts .. "]+)") do
 		t[i] = s
 		i = i + 1
 	end
