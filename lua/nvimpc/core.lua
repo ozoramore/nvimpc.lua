@@ -23,27 +23,25 @@ end
 M.result = {}
 
 M.command = function(data)
-	local writebuf, resultbuf = data .. "\nclose\n", ""
+	local writebuf, resultbuf = data .. '\n', ""
 	local client = vim.uv.new_tcp()
 	assert(client, "new tcp fail")
 	client:send_buffer_size()
-
-	local is_connect = true
 
 	--
 	-- callback関数の定義
 	--
 
 	local on_shutdown = function()
-		is_connect = false
 		client:close()
 	end
 
 	local on_read_start = function(status, buf)
 		assert(not status, status)
-		if buf then
+		if type(buf) == 'string' and string.len(buf) ~= 0 then
 			resultbuf = resultbuf .. buf
 		else
+			client:write('close\n')
 			client:shutdown(on_shutdown)
 		end
 	end
@@ -64,9 +62,7 @@ M.command = function(data)
 
 	client:connect(M.config.addr, M.config.port, on_connect)
 
-	local waiting = function() return not is_connect end
-
-	vim.wait(1000, waiting)
+	vim.wait(100)
 
 	M.result = util.split(resultbuf, nil)
 end
