@@ -12,60 +12,75 @@ M.config = {
 M.setup = function(opts)
 	M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 
-	local family_type = M.config.isv6 and "inetv6" or "inet"
-
 	if not M.config.addr then
+		local family_type = 'inet'
+		if M.config.isv6 then family_type = "inetv6" end
 		local info = vim.uv.getaddrinfo(M.config.host, nil, { family = family_type })
 		M.config.addr = info[1].addr
 	end
 end
 
-M.result = {}
+local is_connect = false
 
-M.command = function(data)
-	local writebuf, resultbuf = data .. '\n', ""
-	local client = vim.uv.new_tcp()
-	assert(client, "new tcp fail")
-	client:send_buffer_size()
-
-	--
-	-- callback関数の定義
-	--
-
-	local on_shutdown = function()
+local disconnect = function(client)
+	if not client then return nil end
+	if not is_connect then return end
+	local on_close = function()
 		client:close()
+		client:shutdown()
+		is_connect = false
 	end
 
+	client:write('close\n', on_close)
+	vim.wait(100)
+end
+
+local write = function(client, data)
+	if not client then return nil end
+	if not is_connect then return nil end
+	local resultbuf = ""
 	local on_read_start = function(status, buf)
 		assert(not status, status)
-		if type(buf) == 'string' and string.len(buf) ~= 0 then
-			resultbuf = resultbuf .. buf
-		else
-			client:write('close\n')
-			client:shutdown(on_shutdown)
-		end
+		if buf then resultbuf = resultbuf .. buf else disconnect(client) end
 	end
-
 	local on_write = function(status)
 		assert(not status, status)
 		client:read_start(on_read_start)
 	end
 
-	local on_connect = function(status)
-		assert(not status, status)
-		client:write(writebuf, on_write)
-	end
-
-	--
-	-- callback関数の定義 end
-	--
-
-	client:connect(M.config.addr, M.config.port, on_connect)
-
+	client:write(data .. '\n', on_write)
 	vim.wait(100)
-
-	M.result = util.split(resultbuf, nil)
+	return resultbuf
 end
 
+local connect = function()
+	if is_connect then return nil end
+	local on_connect = function(status)
+		assert(not status, status)
+		is_connect = true
+	end
+
+	local client = vim.uv.new_tcp()
+	assert(client, "new tcp fail")
+	if not client then return nil end
+
+	client:send_buffer_size()
+	client:connect(M.config.addr, M.config.port, on_connect)
+	vim.wait(100)
+
+	return client
+end
+
+M.command = function(data)
+	local client = connect()
+	if not client then return nil end
+	local response = write(client, data)
+	disconnect(client)
+	if not response then return nil end
+
+	local result = util.split(response, '\n')
+	M.result = result
+	return result
+end
 
 return M

@@ -13,7 +13,7 @@ end
 -- format output example.
 
 local displaySong = function(tbl)
-	print(string.format("%2d: %s / %s - %s",tbl.Track, tbl.Title, tbl.Artist, tbl.Album))
+	print(string.format("%2d: %s / %s - %s", tbl.Track, tbl.Title, tbl.Artist, tbl.Album))
 end
 
 M.nowplaying = function()
