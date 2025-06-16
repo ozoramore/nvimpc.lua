@@ -18,17 +18,19 @@ M.parse = function(array)
 	return t
 end
 
+local devider = function(tbl, rp, marker, id)
+	rp = rp + 1
+	if not string.find(tbl[rp], "Id:") then return nil, rp, marker, id end
+	local t = M.parse(table.move(tbl, marker, rp, 1, {}))
+	return t, rp, rp, (id + 1)
+end
+
 M.devide = function(tbl)
-	local rp, marker, id = 0, 1, 0
+	local t, rp, marker, id = nil, 0, 1, 0
 	return function()
-		local _arr = {}
 		while rp < #tbl do
-			rp = rp + 1
-			if not string.find(tbl[rp], "Pos:") then break end
-			id = id + 1
-			local t = M.parse(table.move(tbl, marker, rp, 1, _arr))
-			marker = rp
-			return id, t
+			t, rp, marker, id = devider(tbl, rp, marker, id)
+			if t then return id, t end
 		end
 		return nil
 	end
