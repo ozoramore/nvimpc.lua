@@ -1,12 +1,8 @@
 local M = {}
 
 M.split = function(str, ts)
-	local t, i = {}, 1
-	ts = ts or "\n"
-	for s in string.gmatch(str, "([^" .. ts .. "]+)") do
-		t[i] = s
-		i = i + 1
-	end
+	local t = {}
+	for s in string.gmatch(str, "([^" .. (ts or '\n') .. "]+)") do table.insert(t, s) end
 	return t
 end
 

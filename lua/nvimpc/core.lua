@@ -11,63 +11,48 @@ M.config = {
 
 M.setup = function(opts)
 	M.config = vim.tbl_deep_extend("force", M.config, opts or {})
-
 	if M.config.addr then return end
-
-	local family_type = ""
-	if M.config.isv6 then family_type = "inetv6" else family_type = 'inet' end
-
-	local info = vim.uv.getaddrinfo(M.config.host, nil, { family = family_type })
-	M.config.addr = info[1].addr
+	local family_type = (function(isv6) if isv6 then return "inetv6" else return 'inet' end end)()
+	vim.uv.getaddrinfo(M.config.host, nil, { family = family_type }, function(_, info) M.config.addr = info[1].addr end)
 end
 
-M.command = function(data, callback)
-	local result_buffer = ""
-	local client = {}
-
-	local on_close = function(_)
-		if callback and (#result_buffer > 0) then
-			callback(util.split(result_buffer, '\n'))
-		end
-	end
-
-	local check_message = function(buf)
-		if not buf then return client:close(on_close) end
-		result_buffer = result_buffer .. buf
-		if string.len(result_buffer) < 4 then return end
-		if string.sub(result_buffer, -4) ~= "\nOK\n" then return end
-		client:write('close\n')
-		client:close(on_close)
-	end
-
-	local on_read_start = function(status, buf)
-		if status then
-			client:close(on_close)
-		else
-			check_message(buf)
-		end
-	end
-
-	local on_write = function(status)
-		if status then
-			client:close(on_close)
-		else
-			client:read_start(on_read_start)
-		end
-	end
-
-	local on_connect = function(status)
-		if status then
-			client:close(on_close)
-		else
-			client:write(data .. '\n', on_write)
-		end
-	end
-
-	client = vim.uv.new_tcp()
-	if not client then return false end
-	client:connect(M.config.addr, M.config.port, on_connect)
+local cb_if = function(client, is_success, cb, buf)
+	if not is_success then return false end
+	cb = cb or function(_) end
+	client:write('close\n', function(_) client:close(function(_) cb(util.split(buf, '\n')) end) end)
 	return true
+end
+
+local check_pass = function(client, ret, message)
+	if not ret then return true end
+	client:write('close\n', function(_) client:close(function(_) error(message) end) end)
+	return false
+end
+
+local read_start = function(client, cb)
+	local result = ""
+	client:read_start(function(status, buf)
+		if not check_pass(client, status, status) then return end
+		if cb_if(client, not buf, cb, result) then return end
+		if not check_pass(client, string.sub(buf, 1, 3) == "ACK", buf) then return end
+		result = result .. buf
+		cb_if(client, string.sub(result, -4) == "\nOK\n", cb, result)
+	end)
+end
+
+local write = function(client, data, cb)
+	client:write(data .. '\n',
+		function(status) if check_pass(client, status, status) then read_start(client, cb) end end)
+end
+
+local connect = function(client, data, cb)
+	if not client then return end
+	client:connect(M.config.addr, M.config.port,
+		function(status) if check_pass(client, status, status) then write(client, data, cb) end end)
+end
+
+M.command = function(data, cb)
+	connect(vim.uv.new_tcp(), data, cb)
 end
 
 return M
