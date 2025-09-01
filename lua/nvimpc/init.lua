@@ -9,7 +9,7 @@ M.exec = function(opts) core.command(opts.args, function(result) print(table.con
 -- format output example.
 
 local displaySong = function(tbl)
-	return string.format("%2d: %s / %s - %s", tbl.Track, tbl.Title, tbl.Artist, tbl.Album)
+	return string.format('%2d: %s / %s - %s', tbl.Track, tbl.Title, tbl.Artist, tbl.Album)
 end
 
 local format_all = function(formatter, result)
