@@ -3,27 +3,34 @@ local M = {}
 local core = require('nvimpc.core')
 local util = require('nvimpc.util')
 
-M.setup = core.setup
-M.exec = function(opts) core.command(opts.args, function(result) print(table.concat(result, '\n')) end) end
-
--- format output example.
-
-local displaySong = function(tbl)
-	return string.format('%2d: %s / %s - %s', tbl.Track, tbl.Title, tbl.Artist, tbl.Album)
+M.commands = {}
+local getcomps = function(result)
+	for _, l in ipairs(result) do
+		for s in string.gmatch(l, 'command: (.+)') do table.insert(M.commands, s) end
+	end
 end
 
+M.setup = function()
+	core.setup()
+	vim.wait(100)
+	core.command('commands', getcomps)
+end
+
+local command_gen = function(cb) return function(opts) core.command(opts.args, cb) end end
+M.print = command_gen(function(result) print(table.concat(result, '\n')) end)
+
+-- format output example.
 local format_all = function(formatter, result)
 	local tbl = {}
 	for _, v in util.devide(result) do table.insert(tbl, formatter(v)) end
 	return tbl
 end
-
-M.nowplaying = function()
-	core.command('currentsong', function(r) print(table.concat(format_all(displaySong, r), '\n')) end)
+local displaySong = function(tbl)
+	return string.format('%2d: %s / %s - %s', tbl.Track, tbl.Title, tbl.Artist, tbl.Album)
 end
+local printsongs = function(result) print(table.concat(format_all(displaySong, result), '\n')) end
 
-M.queue = function()
-	core.command('playlistinfo', function(r) print(table.concat(format_all(displaySong, r), '\n')) end)
-end
+M.nowplaying = function() core.command('currentsong', printsongs) end
+M.queue = function() core.command('playlistinfo', printsongs) end
 
 return M
