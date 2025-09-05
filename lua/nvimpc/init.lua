@@ -4,16 +4,36 @@ local core = require('nvimpc.core')
 local util = require('nvimpc.util')
 
 M.commands = {}
-local getcomps = function(result)
-	for _, l in ipairs(result) do
-		for s in string.gmatch(l, 'command: (.+)') do table.insert(M.commands, s) end
+M.files = {}
+
+local strescape = function(s)
+	s = string.gsub(s, "\\", "\\\\")
+	s = string.gsub(s, "\"", "\\\"")
+	s = string.gsub(s, "\'", "\\\'")
+	return '"' .. s .. '"'
+end
+
+local getcompswithescape = function(tbl)
+	return function(result)
+		for _, l in ipairs(result) do
+			for s in string.gmatch(l, '.+: (.+)') do table.insert(tbl, strescape(s)) end
+		end
+	end
+end
+
+local getcomps = function(tbl)
+	return function(result)
+		for _, l in ipairs(result) do
+			for s in string.gmatch(l, '.+: (.+)') do table.insert(tbl, s) end
+		end
 	end
 end
 
 M.setup = function()
 	core.setup()
 	vim.wait(100)
-	core.command('commands', getcomps)
+	core.command('commands', getcomps(M.commands))
+	core.command('listall', getcompswithescape(M.files))
 end
 
 local command_gen = function(cb) return function(opts) core.command(opts.args, cb) end end
