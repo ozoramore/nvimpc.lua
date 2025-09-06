@@ -14,7 +14,7 @@ M.setup = function(opts)
 	if M.config.addr then return end
 	local family = (function(isv6) if isv6 then return 'inetv6' else return 'inet' end end)
 	local callback = function(_, info) M.config.addr = info[1].addr end
-	vim.uv.getaddrinfo(M.config.host, nil, { family = family() }, callback)
+	vim.uv.getaddrinfo(M.config.host, nil, { family = family(M.config.isv6) }, callback)
 end
 
 local close = function(cl, cb)

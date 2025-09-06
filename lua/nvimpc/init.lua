@@ -20,8 +20,8 @@ local getcomps = function(tbl, func)
 	end
 end
 
-M.setup = function()
-	core.setup()
+M.setup = function(opts)
+	core.setup(opts)
 	vim.wait(100)
 	core.command('commands', getcomps(M.commands, echo))
 	core.command('listall', getcomps(M.files, escape))
