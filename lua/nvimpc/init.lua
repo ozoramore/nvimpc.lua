@@ -26,19 +26,7 @@ M.setup = function(opts)
 	core.command('commands', getcomps(M.commands, echo))
 	core.command('listall', getcomps(M.files, escape))
 end
-
--- format output example.
-local displaySong = function(tbl)
-	return string.format('%2d: %s / %s - %s', tbl.Track, tbl.Title, tbl.Artist, tbl.Album)
-end
-local format_all = function(s, f, d)
-	for _, v in util.devide(s) do table.insert(d, f(v)) end; return d
-end
-local printer = function(result) print(table.concat(result, '\n')) end
-local printsongs = function(r) printer(format_all(r, displaySong, {})) end
-
-M.print = function(opts) core.command(opts.args, printer) end
-M.nowplaying = function() core.command('currentsong', printsongs) end
-M.queue = function() core.command('playlistinfo', printsongs) end
+M.print = function(opts) core.command(opts.args, util.printer) end
+M.gen = function(cmd, cb) return function(_) core.command(cmd, cb) end end
 
 return M

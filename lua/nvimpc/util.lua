@@ -33,5 +33,6 @@ M.devide = function(tbl)
 	end
 end
 
+M.printer = function(result) print(table.concat(result, '\n')) end
 
 return M
