@@ -54,7 +54,7 @@ local connect = function(cl, data, cb)
 	cl:connect(M.config.addr, M.config.port, callback)
 end
 
-M.command = function(data, cb)
+M.exec = function(data, cb)
 	local client = vim.uv.new_tcp()
 	if not client then return end
 	connect(client, data, cb)
