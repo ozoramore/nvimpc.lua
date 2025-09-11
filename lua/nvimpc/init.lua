@@ -1,12 +1,12 @@
 local M = {}
-M.commands = {}
+local commands = {}
 
 local core = require('nvimpc.core')
 local util = require('nvimpc.util')
 
 local commands_cb = function(r)
 	for _, l in ipairs(r) do
-		for s in string.gmatch(l, '.+: (.+)') do table.insert(M.commands, s) end
+		for s in string.gmatch(l, '.+: (.+)') do table.insert(commands, s) end
 	end
 end
 
@@ -15,7 +15,7 @@ local commands_comp = function(a, l, _)
 	local args = #util.split(l, ' ')
 	if args > 2 then return nil end
 	if args == 2 and a == '' then return nil end
-	return vim.tbl_filter(filter, M.commands)
+	return vim.tbl_filter(filter, commands)
 end
 
 local execfunc = function(opts) core.exec(opts.args, util.printer) end
